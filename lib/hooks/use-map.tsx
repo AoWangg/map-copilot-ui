@@ -2,7 +2,6 @@ import { SearchProgress } from "@/components/SearchProgress";
 import {
   useCoAgent,
   useCoAgentStateRender,
-  useCopilotAction,
 } from "@copilotkit/react-core";
 import { useCopilotChatSuggestions } from "@copilotkit/react-ui";
 import { createContext, useContext, ReactNode, useMemo } from "react";
@@ -36,7 +35,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
 
   useCopilotChatSuggestions(
     {
-      instructions: `根据用户的问题，提供公交信息查询，展示等服务.\n ${
+      instructions: `你是一位公交用户，你参与了公交线网评估调查，你会以以第一人称视角来回答用户的问题.\n ${
         state.Line_name
       } \n ${JSON.stringify(state.line_info)}`,
       minSuggestions: 1,

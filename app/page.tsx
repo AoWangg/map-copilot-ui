@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { MapProvider } from "@/lib/hooks/use-map";
-import "@copilotkit/react-ui/styles.css";
+// import McpServerManager from "@/components/McpServerManager";
 
 let MapCanvas: any;
 MapCanvas = dynamic(
@@ -23,13 +23,14 @@ export default function Home() {
       transcribeAudioUrl="/api/transcribe"
       textToSpeechUrl="/api/tts"
     >
+      {/* <McpServerManager /> */}
       <CopilotSidebar
         defaultOpen={false}
         clickOutsideToClose={false}
         labels={{
-          title: "超大城市交通系统态势感知与智能决策系统",
+          title: "大模型智能体驱动的城市公交线网评估平台",
           initial:
-            "欢迎使用超大城市交通系统态势感知与智能决策系统，你可以通过语音或者文字输入进行交通态势查询和决策分析",
+            "欢迎使用大模型智能体驱动的城市公交线网评估平台，你可以通过语音或者文字输入进行公交线网评估结果查询与分析",
         }}
         icons={{
           openIcon: "🚌",
