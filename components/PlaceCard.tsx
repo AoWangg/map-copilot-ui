@@ -1,6 +1,4 @@
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { Place } from "@/lib/types";
-import { Stars } from "@/components/Stars";
 import { MapPin, Info } from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
