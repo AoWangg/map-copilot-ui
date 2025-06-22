@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotSidebar } from "@copilotkit/react-ui";
@@ -18,12 +19,25 @@ MapCanvas = dynamic(
   }
 );
 
-export default function Home() {
+// 提取使用 useSearchParams 的组件
+function LineEvaluationContent() {
   const searchParams = useSearchParams();
   const busName = searchParams.get("busName");
   const adjustmentChoice = searchParams.get("adjustmentChoice");
   const adjustmentPlan = searchParams.get("adjustmentPlan");
 
+  return (
+    <main className="h-screen w-screen">
+      <MapCanvas
+        initialBusName={busName}
+        adjustmentChoice={adjustmentChoice}
+        adjustmentPlan={adjustmentPlan}
+      />
+    </main>
+  );
+}
+
+export default function Home() {
   return (
     <CopilotKit
       runtimeUrl="/api/copilotkit"
@@ -48,13 +62,15 @@ export default function Home() {
       >
         <TooltipProvider>
           <MapProvider>
-            <main className="h-screen w-screen">
-              <MapCanvas
-                initialBusName={busName}
-                adjustmentChoice={adjustmentChoice}
-                adjustmentPlan={adjustmentPlan}
-              />
-            </main>
+            <Suspense
+              fallback={
+                <div className="h-screen w-screen flex items-center justify-center">
+                  加载中...
+                </div>
+              }
+            >
+              <LineEvaluationContent />
+            </Suspense>
           </MapProvider>
         </TooltipProvider>
       </CopilotSidebar>
