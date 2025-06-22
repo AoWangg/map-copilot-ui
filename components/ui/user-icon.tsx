@@ -1,7 +1,7 @@
 import { divIcon } from "leaflet";
 import { Xuesheng } from "../people/xuesheng";
 import { Gongren } from "../people/gongren";
-import { Zhiyuan } from "../people/Zhiyuan";
+import { Zhiyuan } from "../people/zhiyuan";
 import { Jiaoshi } from "../people/jiaoshi";
 import { renderToString } from "react-dom/server";
 
