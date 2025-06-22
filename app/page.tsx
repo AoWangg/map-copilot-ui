@@ -26,13 +26,13 @@ export default function LandingPage() {
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="items-center space-x-2 md:flex hidden">
             <div className="p-2 bg-blue-600 rounded-lg">
               <Bus className="h-6 w-6 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">TransportX</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="items-center space-x-4 md:flex hidden">
             <Link href="/bus-lines">
               <Button variant="ghost">公交线路查询</Button>
             </Link>
@@ -48,12 +48,12 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center mb-6">
             <Sparkles className="h-8 w-8 text-blue-600 mr-3" />
-            <h1 className="text-5xl font-bold text-gray-900">大语言模型智能体驱动的</h1>
+            <h1 className="text-2xl md:text-5xl font-bold text-gray-900">大语言模型智能体驱动的</h1>
           </div>
-          <h1 className="text-5xl font-bold text-blue-600 mb-6">
+          <h1 className="text-2xl md:text-5xl font-bold text-blue-600 mb-6">
             公交线网评估平台
           </h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+          <p className="text-sm md:text-xl text-gray-600 mb-8 leading-relaxed">
             基于大语言模型的智能分析系统，为城市公交线网提供数据驱动的评估与优化建议
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -76,10 +76,10 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
             平台核心功能
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm md:text-lg text-gray-600 max-w-2xl mx-auto">
             结合人工智能与地理信息系统，为公交线网提供全方位的智能分析
           </p>
         </div>
@@ -132,10 +132,10 @@ export default function LandingPage() {
       {/* Main Navigation Cards */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
             选择您的功能
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-sm md:text-lg text-gray-600">
             探索公交线路或进行深度评估分析
           </p>
         </div>
@@ -147,12 +147,12 @@ export default function LandingPage() {
                 <div className="mx-auto p-4 bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Route className="h-10 w-10 text-blue-600" />
                 </div>
-                <CardTitle className="text-2xl text-blue-600">
+                <CardTitle className="text-xl md:text-2xl text-blue-600">
                   公交线路探索
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <CardDescription className="text-base mb-4">
+                <CardDescription className="text-sm md:text-base mb-4">
                   浏览城市公交线路网络，查看线路详情和实时信息
                 </CardDescription>
                 <div className="flex items-center justify-center text-blue-600 font-medium">
@@ -169,12 +169,12 @@ export default function LandingPage() {
                 <div className="mx-auto p-4 bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
                   <BarChart3 className="h-10 w-10 text-green-600" />
                 </div>
-                <CardTitle className="text-2xl text-green-600">
+                <CardTitle className="text-xl md:text-2xl text-green-600">
                   线路评估分析
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <CardDescription className="text-base mb-4">
+                <CardDescription className="text-sm md:text-base mb-4">
                   使用AI智能分析工具，评估线路效率并提出优化建议
                 </CardDescription>
                 <div className="flex items-center justify-center text-green-600 font-medium">

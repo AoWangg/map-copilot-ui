@@ -5,11 +5,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { MapProvider } from "@/lib/hooks/use-map";
+import { Button } from "@/components/ui/button";
 
 let MapCanvas: any;
 MapCanvas = dynamic(
   () =>
-    import("@/components/bus-map-canvas").then((module: any) => module.MapCanvas),
+    import("@/components/bus-map-canvas").then(
+      (module: any) => module.MapCanvas
+    ),
   {
     ssr: false,
   }
@@ -24,7 +27,7 @@ export default function Home() {
     >
       {/* <McpServerManager /> */}
       <CopilotSidebar
-        defaultOpen={false}
+        defaultOpen={true}
         clickOutsideToClose={false}
         labels={{
           title: "🚌 城市公交线网评估平台",
@@ -34,6 +37,9 @@ export default function Home() {
         icons={{
           openIcon: "🚌",
         }}
+        ResponseButton={({ onClick }) => (
+          <Button onClick={onClick}>重新生成回答</Button>
+        )}
       >
         <TooltipProvider>
           <MapProvider>

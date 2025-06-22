@@ -1,8 +1,18 @@
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin, User, Calendar, Building, Car, X } from "lucide-react";
+import {
+  MapPin,
+  User,
+  Calendar,
+  Building,
+  Car,
+  X,
+  GripVertical,
+} from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { UserData } from "@/lib/tools";
+import type { DraggableAttributes } from "@dnd-kit/core";
+import { UserChatDialog } from "./user-chat-dialog";
 
 type UserCardProps = {
   selectedUser: UserData;
@@ -12,6 +22,10 @@ type UserCardProps = {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   onClose?: () => void;
+  dragAttributes?: DraggableAttributes;
+  dragListeners?: Record<string, Function>;
+  initialBusName?: string | null;
+  adjustmentPlan?: string | null;
 };
 
 export function UserCard({
@@ -21,6 +35,10 @@ export function UserCard({
   onMouseLeave,
   className,
   onClose,
+  dragAttributes,
+  dragListeners,
+  initialBusName,
+  adjustmentPlan,
 }: UserCardProps) {
   const { parsedData } = selectedUser;
 
@@ -54,11 +72,23 @@ export function UserCard({
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <div
+                  className="w-4 h-4 text-gray-400 cursor-move flex items-center justify-center"
+                  {...dragAttributes}
+                  {...dragListeners}
+                >
+                  <GripVertical className="w-4 h-4" />
+                </div>
                 <User className="w-5 h-5" />
                 用户信息
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
+              <UserChatDialog
+                user={selectedUser}
+                initialBusName={initialBusName}
+                adjustmentPlan={adjustmentPlan}
+              />
               {actions}
               {onClose && (
                 <button

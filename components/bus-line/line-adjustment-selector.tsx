@@ -52,9 +52,14 @@ export function LineAdjustmentSelector({
 
   const handleEvaluationClick = () => {
     setIsLoading(true);
-    // 3秒后跳转
+    // 3秒后跳转，并传递线路信息
     setTimeout(() => {
-      router.push("line-evaluation");
+      const params = new URLSearchParams({
+        busName: busName,
+        adjustmentChoice: adjustmentChoice,
+        adjustmentPlan: adjustmentPlan || "",
+      });
+      router.push(`line-evaluation?${params.toString()}`);
     }, 3000);
   };
 

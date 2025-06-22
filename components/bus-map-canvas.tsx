@@ -9,6 +9,8 @@ import buslineData from "@/data/busline.json";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { DndContext, useDraggable, DragEndEvent } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 
 export type MapCanvasProps = {
   className?: string;
@@ -37,14 +39,14 @@ export function MapCanvas({ className }: MapCanvasProps) {
   const mapRef = useRef<any>(null);
   const polylinesRef = useRef<Map<string, any>>(new Map()); // 存储所有线路的引用
   const { setOpen } = useChatContext();
-  const isDesktop = useMediaQuery("(min-width: 900px)");
-  const prevIsDesktop = useRef(isDesktop);
   const [highlightedLineName, setHighlightedLineName] = useState<
     string | null
   >();
   const [selectedLineInfo, setSelectedLineInfo] = useState(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const router = useRouter();
+
+  // 添加卡片位置状态
+  const [lineCardPosition, setLineCardPosition] = useState({ x: 48, y: 96 }); // top-24 left-12 对应的像素值
 
   // 添加一个 ref 来跟踪当前高亮的线路
   const highlightedPolylinesRef = useRef<Set<any>>(new Set());
@@ -82,7 +84,6 @@ export function MapCanvas({ className }: MapCanvasProps) {
       });
 
       mapRef.current = map;
-      setIsMapLoaded(true);
 
       // 添加公交线路数据
       addBusLines(map);
@@ -129,6 +130,7 @@ export function MapCanvas({ className }: MapCanvasProps) {
           polyline.on("click", () => {
             setHighlightedLineName(properties.Layer);
             setSelectedLineInfo(properties);
+            setLineCardPosition({ x: 48, y: 96 }); // 重置位置到初始状态
           });
 
           map.add(polyline);
@@ -172,13 +174,6 @@ export function MapCanvas({ className }: MapCanvasProps) {
     }
   }, [highlightedLineName]);
 
-  useEffect(() => {
-    if (prevIsDesktop.current !== isDesktop) {
-      setOpen(isDesktop);
-    }
-    prevIsDesktop.current = isDesktop;
-  }, [isDesktop, setOpen]);
-
   useCopilotAction({
     name: "查询线路",
     description: "根据用户的问题查询线路",
@@ -197,6 +192,7 @@ export function MapCanvas({ className }: MapCanvasProps) {
       if (line) {
         setHighlightedLineName(line.properties.Layer);
         setSelectedLineInfo(line.properties);
+        setLineCardPosition({ x: 48, y: 96 }); // 重置位置
       }
     },
   });
@@ -219,6 +215,7 @@ export function MapCanvas({ className }: MapCanvasProps) {
       if (line) {
         setHighlightedLineName(line.properties.Layer);
         setSelectedLineInfo(line.properties);
+        setLineCardPosition({ x: 48, y: 96 }); // 重置位置
       }
     },
     render: ({ status, args }) => {
@@ -252,35 +249,81 @@ export function MapCanvas({ className }: MapCanvasProps) {
   const handleCloseSelectedLine = useCallback(() => {
     setSelectedLineInfo(null);
     setHighlightedLineName(null);
+    setLineCardPosition({ x: 48, y: 96 }); // 重置位置
   }, []);
 
-  return (
-    <div className="relative">
-      {/* 返回按钮 - 移到主组件级别 */}
-      <div
-        className="absolute top-6 left-12 z-20 cursor-pointer flex items-center gap-2 flex-row bg-white rounded-md p-2 shadow-md"
-        onClick={() => router.back()}
-      >
-        <ArrowLeftIcon className="w-4 h-4" />
-        返回
+  // 可拖拽的线路卡片组件
+  const DraggableLineCard = ({
+    lineInfo,
+    position,
+    onPositionChange,
+  }: {
+    lineInfo: any;
+    position: { x: number; y: number };
+    onPositionChange: (position: { x: number; y: number }) => void;
+  }) => {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+      id: "line-card",
+    });
+
+    const style = {
+      transform: CSS.Translate.toString(transform),
+      left: position.x,
+      top: position.y,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} className="absolute z-10">
+        <PlaceCard
+          className="border-none overflow-y-auto cursor-pointer shadow-lg"
+          selectedLineInfo={lineInfo}
+          onClose={handleCloseSelectedLine}
+          dragAttributes={attributes}
+          dragListeners={listeners}
+        />
       </div>
+    );
+  };
 
-      {selectedLineInfo && (
-        <div className="absolute top-24 left-12 z-10">
-          <PlaceCard
-            className="border-none overflow-y-auto cursor-pointer shadow-lg"
-            selectedLineInfo={selectedLineInfo}
-            onClose={handleCloseSelectedLine}
-          />
+  // 处理拖拽结束事件
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, delta } = event;
+
+    if (active.id === "line-card") {
+      setLineCardPosition((prev) => ({
+        x: prev.x + delta.x,
+        y: prev.y + delta.y,
+      }));
+    }
+  };
+
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="relative">
+        {/* 返回按钮 - 移到主组件级别 */}
+        <div
+          className="absolute top-6 left-12 z-20 cursor-pointer flex items-center gap-2 flex-row bg-white rounded-md p-2 shadow-md"
+          onClick={() => router.back()}
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          返回
         </div>
-      )}
 
-      {/* 高德地图容器 */}
-      <div
-        ref={mapContainerRef}
-        className={cn("w-screen h-screen", className)}
-        style={{ zIndex: 0 }}
-      />
-    </div>
+        {selectedLineInfo && (
+          <DraggableLineCard
+            lineInfo={selectedLineInfo}
+            position={lineCardPosition}
+            onPositionChange={(position) => setLineCardPosition(position)}
+          />
+        )}
+
+        {/* 高德地图容器 */}
+        <div
+          ref={mapContainerRef}
+          className={cn("w-screen h-screen", className)}
+          style={{ zIndex: 0 }}
+        />
+      </div>
+    </DndContext>
   );
 }
