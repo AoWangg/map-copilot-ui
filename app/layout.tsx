@@ -7,8 +7,9 @@ import "@copilotkit/react-ui/styles.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Map Copilot",
-  description: "A map copilot for bus lines",
+  title: "TransportX - 智能体驱动的公交线网评估平台",
+  description:
+    "基于大语言模型的智能分析系统，为城市公交线网提供数据驱动的评估与优化建议",
 };
 
 export default function RootLayout({
