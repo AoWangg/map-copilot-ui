@@ -1,6 +1,4 @@
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from "react-leaflet";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Map } from "leaflet";
 import { cn } from "@/lib/utils";
 import {
   getAttitudeScore,
@@ -15,15 +13,25 @@ import {
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { useChatContext } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
-import { UserCard } from "./UserCard";
-import { createPersonIcon } from "./ui/user-icon";
+import { UserCard } from "./line-evaluation/user-card";
+import { useRouter } from "next/navigation";
+import { ArrowLeftIcon } from "lucide-react";
 
 export type MapCanvasProps = {
   className?: string;
 };
 
+// 声明高德地图的全局类型
+declare global {
+  interface Window {
+    AMap: any;
+  }
+}
+
 export function MapCanvas({ className }: MapCanvasProps) {
-  const [map, setMap] = useState<Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const markersRef = useRef<Map<string, any>>(new Map()); // 存储所有标记的引用
   const { setOpen } = useChatContext();
   const isDesktop = useMediaQuery("(min-width: 900px)");
   const prevIsDesktop = useRef(isDesktop);
@@ -31,6 +39,132 @@ export function MapCanvas({ className }: MapCanvasProps) {
   const [originalUserData, setOriginalUserData] = useState<UserData[]>([]); // 保存原始数据
   const [csvHeader, setCsvHeader] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const router = useRouter();
+
+  // 初始化高德地图
+  useEffect(() => {
+    const initMap = async () => {
+      if (!mapContainerRef.current || mapRef.current) return;
+
+      // 动态加载高德地图脚本
+      if (!window.AMap) {
+        const script = document.createElement("script");
+        script.src =
+          "https://webapi.amap.com/maps?v=1.4.15&key=43e6e0dda5bfd63e76d87ad55f2c6ee5";
+        script.async = true;
+        script.onload = () => {
+          createMap();
+        };
+        document.head.appendChild(script);
+      } else {
+        createMap();
+      }
+    };
+
+    const createMap = () => {
+      if (!mapContainerRef.current) return;
+
+      // 创建地图实例
+      const map = new window.AMap.Map(mapContainerRef.current, {
+        resizeEnable: true,
+        mapStyle: `amap://styles/whitesmoke`,
+        center: [121.4737, 31.2304], // 上海坐标
+        zoom: 10,
+        zoomControl: false,
+      });
+
+      mapRef.current = map;
+      setIsMapLoaded(true);
+
+      // 添加地图点击事件
+      map.on("click", () => {
+        setSelectedUser(null);
+      });
+    };
+
+    initMap();
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.destroy();
+        mapRef.current = null;
+      }
+      markersRef.current.clear();
+    };
+  }, []);
+
+  // 添加用户标记到地图
+  const addUserMarkers = useCallback((map: any, users: UserData[]) => {
+    if (!map || !users.length) return;
+
+    // 清除现有标记
+    markersRef.current.forEach((marker) => {
+      map.remove(marker);
+    });
+    markersRef.current.clear();
+
+    users.forEach((user, index) => {
+      // 创建自定义图标
+      const icon = createPersonIcon(
+        user.parsedData.gender,
+        user.parsedData.occupation
+      );
+
+      // 创建高德地图标记
+      const marker = new window.AMap.Marker({
+        position: [user.lng, user.lat],
+        icon: icon,
+        offset: new window.AMap.Pixel(-12, -12), // 调整图标位置
+      });
+
+      // 添加点击事件
+      marker.on("click", () => {
+        setSelectedUser(user);
+      });
+
+      map.add(marker);
+      markersRef.current.set(`${user.lat}-${user.lng}-${index}`, marker);
+    });
+  }, []);
+
+  // 当用户数据或地图加载状态改变时，更新标记
+  useEffect(() => {
+    if (mapRef.current && isMapLoaded && userData.length > 0) {
+      addUserMarkers(mapRef.current, userData);
+    }
+  }, [userData, isMapLoaded, addUserMarkers]);
+
+  // 创建用户图标的函数
+  const createPersonIcon = (gender: string, occupation: string) => {
+    // 根据性别和职业确定颜色
+    let color = "#4CAF50"; // 默认绿色
+    if (gender === "女") {
+      color = "#E91E63"; // 粉色
+    }
+
+    // 根据职业调整大小
+    let size = 24;
+    if (occupation === "学生") {
+      size = 20;
+    } else if (occupation === "退休人员") {
+      size = 28;
+    }
+
+    // 创建SVG图标
+    const svg = `
+      <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="5" fill="${color}"/>
+        <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="${color}" stroke-width="2" fill="none"/>
+      </svg>
+    `;
+
+    return new window.AMap.Icon({
+      size: new window.AMap.Size(size, size),
+      image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+      imageSize: new window.AMap.Size(size, size),
+    });
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -235,62 +369,35 @@ export function MapCanvas({ className }: MapCanvasProps) {
     },
   });
 
-  // 处理地图点击事件
-  const handleMapClick = () => {
-    setSelectedUser(null);
-  };
-
   // 处理用户卡片点击事件（阻止冒泡）
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
-  const onUserClick = (user: UserData) => {
-    setSelectedUser(user);
-  };
-
   return (
-    <div className="relative" onClick={handleMapClick}>
+    <div className="relative">
+      <div
+        className="absolute top-6 left-12 z-10 cursor-pointer flex items-center gap-2 flex-row bg-white rounded-md p-2 shadow-md"
+        onClick={() => router.back()}
+      >
+        <ArrowLeftIcon className="w-4 h-4" />
+        返回
+      </div>
       {selectedUser && (
-        <div className="absolute top-12 left-12 z-10" onClick={handleCardClick}>
+        <div className="absolute top-24 left-12 z-10" onClick={handleCardClick}>
           <UserCard
-            className="border-none overflow-y-auto shadow-none cursor-pointer hover:shadow-lg"
+            className="border-none overflow-y-auto cursor-pointer shadow-lg"
             selectedUser={selectedUser}
           />
         </div>
       )}
-      <MapContainer
+
+      {/* 高德地图容器 */}
+      <div
+        ref={mapContainerRef}
         className={cn("w-screen h-screen", className)}
         style={{ zIndex: 0 }}
-        center={[31.2304, 121.4737]}
-        zoom={10}
-        zoomAnimationThreshold={100}
-        zoomControl={false}
-        ref={setMap}
-      >
-        <TileLayer
-          url="https://webrd04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}"
-          subdomains={["1", "2", "3", "4"]}
-          maxZoom={18}
-          minZoom={3}
-        />
-        {userData.map((user, index) => (
-          <Marker
-            key={index}
-            position={[user.lat, user.lng]}
-            icon={createPersonIcon(
-              user.parsedData.gender,
-              user.parsedData.occupation
-            )}
-            eventHandlers={{
-              click: (e) => {
-                e.originalEvent.stopPropagation();
-                onUserClick(user);
-              },
-            }}
-          ></Marker>
-        ))}
-      </MapContainer>
+      />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { MapProvider } from "@/lib/hooks/use-map";
 let MapCanvas: any;
 MapCanvas = dynamic(
   () =>
-    import("@/components/BusMapCanvas").then((module: any) => module.MapCanvas),
+    import("@/components/bus-map-canvas").then((module: any) => module.MapCanvas),
   {
     ssr: false,
   }
