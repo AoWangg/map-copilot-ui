@@ -1,5 +1,5 @@
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin, User, Calendar, Building, Car } from "lucide-react";
+import { MapPin, User, Calendar, Building, Car, X } from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { UserData } from "@/lib/tools";
@@ -11,6 +11,7 @@ type UserCardProps = {
   actions?: ReactNode;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onClose?: () => void;
 };
 
 export function UserCard({
@@ -19,6 +20,7 @@ export function UserCard({
   onMouseEnter,
   onMouseLeave,
   className,
+  onClose,
 }: UserCardProps) {
   const { parsedData } = selectedUser;
 
@@ -56,7 +58,18 @@ export function UserCard({
                 用户信息
               </CardTitle>
             </div>
-            {actions}
+            <div className="flex items-center gap-2">
+              {actions}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="关闭"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 text-sm">

@@ -77,10 +77,10 @@ export function MapCanvas({ className }: MapCanvasProps) {
       mapRef.current = map;
       setIsMapLoaded(true);
 
-      // 添加地图点击事件
-      map.on("click", () => {
-        setSelectedUser(null);
-      });
+      // 移除地图点击事件，不再自动关闭用户卡片
+      // map.on("click", () => {
+      //   setSelectedUser(null);
+      // });
     };
 
     initMap();
@@ -369,6 +369,11 @@ export function MapCanvas({ className }: MapCanvasProps) {
     },
   });
 
+  // 添加关闭选中用户的函数
+  const handleCloseSelectedUser = useCallback(() => {
+    setSelectedUser(null);
+  }, []);
+
   // 处理用户卡片点击事件（阻止冒泡）
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -388,6 +393,7 @@ export function MapCanvas({ className }: MapCanvasProps) {
           <UserCard
             className="border-none overflow-y-auto cursor-pointer shadow-lg"
             selectedUser={selectedUser}
+            onClose={handleCloseSelectedUser}
           />
         </div>
       )}

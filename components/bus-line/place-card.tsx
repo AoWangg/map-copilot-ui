@@ -1,5 +1,5 @@
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin, Info } from "lucide-react";
+import { MapPin, Info, X } from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ type PlaceCardProps = {
   actions?: ReactNode;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onClose?: () => void;
 };
 
 export function PlaceCard({
@@ -19,6 +20,7 @@ export function PlaceCard({
   onMouseLeave,
   className,
   number,
+  onClose,
 }: PlaceCardProps) {
   return (
     <Card
@@ -37,7 +39,18 @@ export function PlaceCard({
                 {selectedLineInfo.BusName}
               </CardTitle>
             </div>
-            {actions}
+            <div className="flex items-center gap-2">
+              {actions}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="关闭"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2 text-sm text-muted-foreground">

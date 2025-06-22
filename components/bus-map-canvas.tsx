@@ -248,6 +248,12 @@ export function MapCanvas({ className }: MapCanvasProps) {
     value: selectedLineInfo,
   });
 
+  // 添加关闭选中线路的函数
+  const handleCloseSelectedLine = useCallback(() => {
+    setSelectedLineInfo(null);
+    setHighlightedLineName(null);
+  }, []);
+
   return (
     <div className="relative">
       {/* 返回按钮 - 移到主组件级别 */}
@@ -262,8 +268,9 @@ export function MapCanvas({ className }: MapCanvasProps) {
       {selectedLineInfo && (
         <div className="absolute top-24 left-12 z-10">
           <PlaceCard
-            className="border-none overflow-y-auto shadow-none cursor-pointer hover:shadow-lg"
+            className="border-none overflow-y-auto cursor-pointer shadow-lg"
             selectedLineInfo={selectedLineInfo}
+            onClose={handleCloseSelectedLine}
           />
         </div>
       )}
