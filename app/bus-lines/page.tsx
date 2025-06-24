@@ -6,6 +6,8 @@ import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { MapProvider } from "@/lib/hooks/use-map";
 import { Button } from "@/components/ui/button";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
 
 let MapCanvas: any;
 MapCanvas = dynamic(
@@ -19,6 +21,22 @@ MapCanvas = dynamic(
 );
 
 export default function Home() {
+  const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      loginWithRedirect();
+    }
+  }, [isLoading, isAuthenticated, loginWithRedirect]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        正在跳转到登录...
+      </div>
+    );
+  }
+
   return (
     <CopilotKit
       runtimeUrl="/api/copilotkit"

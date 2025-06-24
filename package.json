@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.3.0",
     "@copilotkit/react-core": "1.4.7",
     "@copilotkit/react-ui": "1.4.7",
     "@copilotkit/runtime": "1.4.7",
