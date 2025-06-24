@@ -16,9 +16,8 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
-  Globe,
-  Users,
 } from "lucide-react";
+import UserMenu from "@/components/login/user-menu";
 
 export default function LandingPage() {
   return (
@@ -32,13 +31,16 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-bold text-gray-900">TransportX</span>
           </div>
-          <div className="items-center space-x-4 md:flex hidden">
-            <Link href="/bus-lines">
-              <Button variant="ghost">公交线路查询</Button>
-            </Link>
-            <Link href="/line-evaluation">
-              <Button variant="ghost">线路评估分析</Button>
-            </Link>
+          <div className="flex flex-row items-center space-x-4">
+            <div className="items-center space-x-4 md:flex hidden">
+              <Link href="/bus-lines">
+                <Button variant="ghost">公交线路查询</Button>
+              </Link>
+              <Link href="/line-evaluation">
+                <Button variant="ghost">线路评估分析</Button>
+              </Link>
+            </div>
+            <UserMenu />
           </div>
         </nav>
       </header>
@@ -48,7 +50,9 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center mb-6">
             <Sparkles className="h-8 w-8 text-blue-600 mr-3" />
-            <h1 className="text-2xl md:text-5xl font-bold text-gray-900">大语言模型智能体驱动的</h1>
+            <h1 className="text-2xl md:text-5xl font-bold text-gray-900">
+              大语言模型智能体驱动的
+            </h1>
           </div>
           <h1 className="text-2xl md:text-5xl font-bold text-blue-600 mb-6">
             公交线网评估平台
