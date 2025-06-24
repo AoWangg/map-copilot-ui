@@ -441,7 +441,8 @@ export function filterUserData(
  */
 export function createPersonIcon(
   gender: string,
-  occupation: string
+  occupation: string,
+  isSelected: boolean
 ): { svg: string; size: number } {
   let color = "#4CAF50"; // 默认绿色
   if (gender === "女") {

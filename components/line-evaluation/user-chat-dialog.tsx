@@ -84,7 +84,7 @@ export function UserChatDialog({
           与用户对话
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl min-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>

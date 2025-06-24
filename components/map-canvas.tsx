@@ -73,7 +73,7 @@ export function MapCanvas({
   const router = useRouter();
 
   // 添加卡片位置状态
-  const [userCardPosition, setUserCardPosition] = useState({ x: 48, y: 96 }); // top-24 left-12 对应的像素值
+  const [userCardPosition, setUserCardPosition] = useState({ x: 500, y: 96 }); // top-24 left-12 对应的像素值
   const [lineCardPosition, setLineCardPosition] = useState({ x: 48, y: 96 });
 
   // 添加一个 ref 来跟踪当前高亮的线路
@@ -160,7 +160,8 @@ export function MapCanvas({
       // 使用工具函数生成 SVG 和 size
       const { svg, size } = createPersonIcon(
         user.parsedData.gender,
-        user.parsedData.occupation
+        user.parsedData.occupation,
+        user === selectedUser
       );
       // 创建高德地图标记
       const marker = new window.AMap.Marker({
