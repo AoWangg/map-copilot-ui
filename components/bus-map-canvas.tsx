@@ -104,8 +104,32 @@ export function MapCanvas({ className }: MapCanvasProps) {
   const addBusLines = useCallback((map: any) => {
     if (!map || !buslineData) return;
 
-    const buslineDataTyped = buslineData as BusLineData;
+    // 1. 先加载区多边形
+    fetch("/gis/qu.geojson")
+      .then((res) => res.json())
+      .then((geojson) => {
+        geojson.features.forEach((feature: any) => {
+          if (feature.geometry.type === "MultiPolygon") {
+            feature.geometry.coordinates.forEach((polygon: any) => {
+              const path = polygon[0].map(([lng, lat]: [number, number]) => [
+                lng,
+                lat,
+              ]);
+              const districtPolygon = new window.AMap.Polygon({
+                path,
+                strokeColor: "#0052D9",
+                strokeWeight: 2,
+                fillColor: "#79bbff",
+                fillOpacity: 0.2,
+              });
+              mapRef.current.add(districtPolygon);
+            });
+          }
+        });
+      });
 
+    // 2. 再添加公交线路
+    const buslineDataTyped = buslineData as BusLineData;
     buslineDataTyped.features.forEach((feature) => {
       const geometry = feature.geometry;
       const properties = feature.properties;

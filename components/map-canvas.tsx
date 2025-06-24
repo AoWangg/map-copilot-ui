@@ -1,14 +1,14 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
-  getAttitudeScore,
-  getBehavioralIntentionScore,
   parseCsvLine,
   parseSurveyData,
   UserData,
   extractDistrict,
   filterUserData,
   FilterCriteria,
+  createPersonIcon,
+  getTownStats,
 } from "@/lib/tools";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { useChatContext } from "@copilotkit/react-ui";
@@ -21,6 +21,7 @@ import type { GeoJsonObject } from "geojson";
 import { PlaceCard } from "./bus-line/place-card";
 import { DndContext, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 
 export type MapCanvasProps = {
   className?: string;
@@ -150,32 +151,31 @@ export function MapCanvas({
   // 添加用户标记到地图
   const addUserMarkers = useCallback((map: any, users: UserData[]) => {
     if (!map || !users.length) return;
-
     // 清除现有标记
     markersRef.current.forEach((marker) => {
       map.remove(marker);
     });
     markersRef.current.clear();
-
     users.forEach((user, index) => {
-      // 创建自定义图标
-      const icon = createPersonIcon(
+      // 使用工具函数生成 SVG 和 size
+      const { svg, size } = createPersonIcon(
         user.parsedData.gender,
         user.parsedData.occupation
       );
-
       // 创建高德地图标记
       const marker = new window.AMap.Marker({
         position: [user.lng, user.lat],
-        icon: icon,
+        icon: new window.AMap.Icon({
+          size: new window.AMap.Size(size, size),
+          image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+          imageSize: new window.AMap.Size(size, size),
+        }),
         offset: new window.AMap.Pixel(-12, -12), // 调整图标位置
       });
-
       // 添加点击事件
       marker.on("click", () => {
         setSelectedUser(user);
       });
-
       map.add(marker);
       markersRef.current.set(`${user.lat}-${user.lng}-${index}`, marker);
     });
@@ -185,48 +185,37 @@ export function MapCanvas({
   const addBusLines = useCallback(
     (map: any) => {
       if (!map || !buslineData || !initialBusName) return;
-
       const buslineDataTyped = buslineData as BusLineData;
-
       // 只查找传入的线路
       const targetFeature = buslineDataTyped.features.find(
         (feature) => feature.properties.BusName === initialBusName
       );
-
       if (!targetFeature) return;
-
       const geometry = targetFeature.geometry;
       const properties = targetFeature.properties;
-
       if (geometry.type === "MultiLineString" && "coordinates" in geometry) {
         const coordinates = geometry.coordinates as number[][][];
-
         coordinates.forEach((lineString) => {
           const path = lineString.map((coord: number[]) => [
             coord[0],
             coord[1],
           ]);
-
           const polyline = new window.AMap.Polyline({
             path: path,
             strokeColor: "#FF6B35", // 直接使用高亮颜色
             strokeWeight: 4,
             strokeOpacity: 1,
           });
-
           map.add(polyline);
-
           // 存储线路引用，使用Layer作为key
           if (!polylinesRef.current.has(properties.Layer)) {
             polylinesRef.current.set(properties.Layer, []);
           }
           polylinesRef.current.get(properties.Layer)!.push(polyline);
-
           polyline.on("click", () => {
             setHighlightedLineName(properties.Layer);
             setSelectedLineInfo(properties);
           });
-
           // 记录当前高亮的线路
           highlightedPolylinesRef.current.add(polyline);
         });
@@ -270,37 +259,6 @@ export function MapCanvas({
       addUserMarkers(mapRef.current, userData);
     }
   }, [userData, isMapLoaded, addUserMarkers]);
-
-  // 创建用户图标的函数
-  const createPersonIcon = (gender: string, occupation: string) => {
-    // 根据性别和职业确定颜色
-    let color = "#4CAF50"; // 默认绿色
-    if (gender === "女") {
-      color = "#E91E63"; // 粉色
-    }
-
-    // 根据职业调整大小
-    let size = 24;
-    if (occupation === "学生") {
-      size = 20;
-    } else if (occupation === "退休人员") {
-      size = 28;
-    }
-
-    // 创建SVG图标
-    const svg = `
-      <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="8" r="5" fill="${color}"/>
-        <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="${color}" stroke-width="2" fill="none"/>
-      </svg>
-    `;
-
-    return new window.AMap.Icon({
-      size: new window.AMap.Size(size, size),
-      image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-      imageSize: new window.AMap.Size(size, size),
-    });
-  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -507,6 +465,32 @@ export function MapCanvas({
     },
   });
 
+  useCopilotAction({
+    name: "统计街道用户分布",
+    description:
+      "统计哪个街道受影响用户最多，哪个街道态度评分低的人最多。返回街道名称和数量。",
+    parameters: [
+      {
+        name: "attitudeThreshold",
+        type: "number",
+        description: "态度评分低的阈值，默认3分",
+        required: false,
+      },
+    ],
+    handler: async ({
+      attitudeThreshold = 3,
+    }: {
+      attitudeThreshold?: number;
+    }) => {
+      // 1. 加载街道geojson
+      const res = await fetch("/gis/twon.geojson");
+      const geojson = await res.json();
+      // 2. 统计分布，传入 turf 的 booleanPointInPolygon
+      (globalThis as any).booleanPointInPolygon = booleanPointInPolygon;
+      return getTownStats(geojson, userData, attitudeThreshold);
+    },
+  });
+
   // 添加关闭选中用户的函数
   const handleCloseSelectedUser = useCallback(() => {
     setSelectedUser(null);
@@ -616,6 +600,76 @@ export function MapCanvas({
       }));
     }
   };
+
+  useEffect(() => {
+    if (!isMapLoaded || !mapRef.current || userData.length === 0) return;
+
+    let polygons: any[] = [];
+
+    fetch("/gis/twon.geojson")
+      .then((res) => res.json())
+      .then((geojson) => {
+        // 清除旧的多边形
+        if ((window as any).townPolygons) {
+          (window as any).townPolygons.forEach((polygon: any) =>
+            mapRef.current.remove(polygon)
+          );
+        }
+        (window as any).townPolygons = [];
+
+        geojson.features.forEach((feature: any) => {
+          // 统计该乡镇内的用户数量
+          const count = userData.filter((user) => {
+            const pt = {
+              type: "Point" as const,
+              coordinates: [user.lng, user.lat],
+            };
+            return booleanPointInPolygon(pt, feature);
+          }).length;
+
+          // 根据数量设置颜色
+          let fillColor = "#e0e0e0";
+          if (count > 20) fillColor = "#ff5722";
+          else if (count > 10) fillColor = "#ff9800";
+          else if (count > 0) fillColor = "#ffc107";
+
+          // 处理 MultiPolygon
+          const polygonsCoords = feature.geometry.coordinates;
+          polygonsCoords.forEach((polygonCoords: any) => {
+            // polygonCoords 是一个二维数组
+            const path = polygonCoords[0].map((c: number[]) => [c[0], c[1]]);
+            const polygon = new window.AMap.Polygon({
+              path,
+              strokeColor: "#333",
+              strokeWeight: 1,
+              fillColor,
+              fillOpacity: 0.5,
+              zIndex: 1,
+            });
+            mapRef.current.add(polygon);
+            polygons.push(polygon);
+
+            // 鼠标悬停显示乡镇名和用户数
+            polygon.on("mouseover", (e: any) => {
+              const infoWindow = new window.AMap.InfoWindow({
+                content: `${feature.properties.Name}<br/>受影响用户数：${count}`,
+                offset: new window.AMap.Pixel(0, -30),
+                closeWhenClickMap: true,
+              });
+              infoWindow.open(mapRef.current, e.lnglat);
+              polygon._infoWindow = infoWindow;
+            });
+            polygon.on("mouseout", () => {
+              if (polygon._infoWindow) {
+                polygon._infoWindow.close();
+              }
+            });
+          });
+        });
+
+        (window as any).townPolygons = polygons;
+      });
+  }, [isMapLoaded, userData]);
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
